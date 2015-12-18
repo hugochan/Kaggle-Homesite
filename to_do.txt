@@ -1,0 +1,5 @@
+To do list:
+
+1) Feature extraction: PCA, PCA + individual relevance ranking, LDA, FAMD, etc.
+2) Model selection: GB, RF, etc.
+

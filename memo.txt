@@ -1,0 +1,31 @@
+How to handle mixed data (numerical & categorical):
+1) LabelEncoder, OneHotEncoder...
+
+Feature extraction
+1) PCA +  Individual relevance ranking
+2) LDA
+3) FAMD
+
+Model selection
+1) xgboost
+2) etc.
+
+Experiment results
+1) LabelEncoder + xgboost
+stratified 3-fold cross-validation avg_auc: 0.958873000043 
+
+2) LabelEncoder + PCA + xgboost
+stratified 3-fold cross-validation avg_auc: 
+0.932277306935 (n_comp=all)
+0.932408157211 (n_comp=292)
+0.932007089512 (n_comp=280)
+
+total runtime: 818s
+
+Cross-validation
+1) stratified k-fold cross-validation is good for preserving the percentage of samples for each class.
+
+Note
+1) Simple python script for xgboost: 0.95971, https://www.kaggle.com/mpearmain/homesite-quote-conversion/xgboost-benchmark/log
+2) Homesite Competition is similar to Springleaf Competition (GB, RF)
+
