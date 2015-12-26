@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from sklearn import preprocessing
 from sklearn.decomposition import PCA
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
 def load_data(train_file, test_file):
     df_train = pd.read_csv(train_file, header = 0, delimiter = ',')
@@ -28,6 +29,39 @@ def load_data(train_file, test_file):
 
     return df_train, df_test
 
+def standardize(data):
+    """
+    standardize
+    """
+    centered_data = data - data.mean()
+    # MaxAbs scaling
+    std_data = preprocessing.maxabs_scale(centered_data)
+    return std_data
+
+def standardize_local(data):
+    # standardize for specific features
+    data['Field10'] = pd.Series(preprocessing.maxabs_scale(data['Field10'] - data['Field10'].mean()))
+    data['Year'] = pd.Series(preprocessing.maxabs_scale(data['Year'] - data['Year'].mean()))
+    return data
+
+def one_hot_encoder(data):
+    """
+    Label Encoder: categorical -> nemurical (One hot coding)
+    """
+    for f in data.columns:
+        if data[f].dtype == 'object':
+            print f
+            lbl = preprocessing.LabelEncoder()
+            int_label = lbl.fit_transform(list(data[f].values))
+
+            enc = preprocessing.OneHotEncoder()
+            one_hot_label = enc.fit_transform(int_label.reshape(-1, 1)).toarray()
+            data = data.drop(f, axis=1)
+            for i in range(one_hot_label.shape[1]):
+                data['%s_%s'%(f,i)] = one_hot_label[:, i]
+    return data
+
+
 def label_encoder(data):
     """
     Label Encoder: categorical -> nemurical
@@ -37,11 +71,10 @@ def label_encoder(data):
         if data[f].dtype=='object':
             print(f)
             lbl = preprocessing.LabelEncoder()
-            lbl.fit(list(data[f].values))
-            data[f] = lbl.transform(list(data[f].values))
+            data[f] = lbl.fit_transform(list(data[f].values))
     return data
 
-def pca(train, test, n_comp=292):
+def pca(train, test, n_comp=None):
     """
     PCA
     """
@@ -58,11 +91,16 @@ def pca_irranking(train, y, test):
     """
     return train, test
 
-def lda(train, y, test):
+def lda(train, y, test, n_comp=None):
     """
     LDA
     """
-    return train, test
+    _lda = LinearDiscriminantAnalysis(solver='eigen', n_components=n_comp)
+    # import pdb;pdb.set_trace()
+    _lda.fit(train, y)
+    new_train  = _lda.transform(train)
+    new_test = _lda.transform(test)
+    return new_train, new_test
 
 def famd(train, test):
     """
@@ -71,36 +109,59 @@ def famd(train, test):
     return train, test
 
 def clean(data):
+    # Lets do some cleaning
+
+    # play with date
+    data['Date'] = pd.to_datetime(pd.Series(data['Original_Quote_Date']))
+    data = data.drop('Original_Quote_Date', axis=1)
+
+    data['Year'] = data['Date'].apply(lambda x: int(str(x)[:4]))
+    data['Month'] = data['Date'].apply(lambda x: int(str(x)[5:7]))
+    data['weekday'] = data['Date'].dt.dayofweek
+
+    data = data.drop('Date', axis=1)
+
+    # convert Field10 manully
+    data['Field10'] = data['Field10'].apply(lambda x: int(x.replace(',','')))
+
+    # # numerical features
+    # ndf = data._get_numeric_data()
+    # ncol = ndf.columns
+    # nindex = ndf.index
+    # # import pdb;pdb.set_trace()
+    # # est = preprocessing.Imputer(missing_values='NaN', strategy='mean')
+    # # ndf = est.fit_transform(ndf)
+    # # ndf = pd.DataFrame(data=ndf, index=nindex, columns=ncol)
+
+
+    # # numerical fillnan: -1
+    # ndf = ndf.fillna(-1)
+    # data[ncol] = ndf
+
+    # # categorical fillnan: most_frequent
+    # ccol = ['PersonalField7', 'Field6', 'PropertyField28', 'PropertyField5', 'PropertyField4', 'PropertyField7', 'PropertyField3', 'PersonalField18', 'PersonalField19', 'Field12', 'SalesField7', 'PersonalField16', 'PersonalField17', 'CoverageField8', 'CoverageField9', 'PropertyField32', 'GeographicField63', 'GeographicField64', 'PropertyField38', 'PropertyField37', 'PropertyField36', 'PropertyField34', 'PropertyField33', 'PropertyField14', 'PropertyField31', 'PropertyField30']
+    # for col in ccol:
+    #     if data[col].isnull().any():
+    #         _list = data[col].tolist()
+    #         _set = set(_list)
+    #         most_freq_elem = None
+    #         most_freq = 0
+    #         for each in _set:
+    #             freq = _list.count(each)
+    #             if freq > most_freq:
+    #                 most_freq = freq
+    #                 most_freq_elem = each
+    #         data[col] = data[col].fillna(each)
+    # import pdb;pdb.set_trace()
+
+    data = data.fillna(-1)
+
     if 'QuoteConversion_Flag' in data.columns:
         y = data.QuoteConversion_Flag.values
         train = data.drop(['QuoteNumber', 'QuoteConversion_Flag'], axis=1)
-
-        # Lets do some cleaning
-        train['Date'] = pd.to_datetime(pd.Series(train['Original_Quote_Date']))
-        train = train.drop('Original_Quote_Date', axis=1)
-
-        train['Year'] = train['Date'].apply(lambda x: int(str(x)[:4]))
-        train['Month'] = train['Date'].apply(lambda x: int(str(x)[5:7]))
-        train['weekday'] = train['Date'].dt.dayofweek
-
-        train = train.drop('Date', axis=1)
-
-        train = train.fillna(-1)
         return train, y
     else:
         test = data.drop('QuoteNumber', axis=1)
-
-        # Lets do some cleaning
-        test['Date'] = pd.to_datetime(pd.Series(test['Original_Quote_Date']))
-        test = test.drop('Original_Quote_Date', axis=1)
-
-        test['Year'] = test['Date'].apply(lambda x: int(str(x)[:4]))
-        test['Month'] = test['Date'].apply(lambda x: int(str(x)[5:7]))
-        test['weekday'] = test['Date'].dt.dayofweek
-
-        test = test.drop('Date', axis=1)
-
-        test = test.fillna(-1)
         return test
 
 def feature_extraction(train, y, test, method):
