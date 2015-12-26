@@ -1,0 +1,25 @@
+## How to handle mixed data (numerical & categorical):
+1) LabelEncoder, OneHotEncoder, etc...
+
+## Feature extraction
+1) PCA +  Individual relevance ranking
+2) LDA
+3) FAMD
+4) etc.
+
+## Model selection
+1) xgboost
+2) FR
+3) etc.
+
+## Experiment results
+| Fillnan -1 | Fillnan mean | LabelEncoder | OneHotEncoder | standardized | PCA | xgboost |      cv-3 auc        | runtime (s)
+      T                            T                                                 T           0.95887889176   |    354 s
+      T                            T                             T                   T           0.958878835725       330 s
+      T                            T                                         T       T           0.935672327087  |    647 s
+      T                            T                             T           T                   0.924474693345  |    639 s
+                    T              T                                                 T           0.9588768449837 |    528 s
+      T                                           T                                  T           0.958892573508  |    780 s     
+
+Note: Fillnan median (most frequent) does not change much. Fillnan -1 is simple and good.
+
