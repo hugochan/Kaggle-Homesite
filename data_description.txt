@@ -1,0 +1,18 @@
+dataset: train.csv
+
+# records: 260753 
+# positive records: 48894 (0.19)
+# negative records: 211859
+
+# attrs: 297 (excluding QuoteNumber and QuoteConversion_Flag) 
+# numerical attrs: 269 (excluding QuoteNumber and QuoteConversion_Flag)
+# categorial attrs: 28
+
+categorical attrs: (Field10 can be directly converted to numerical attr)
+
+['PersonalField7', 'Field6', 'Original_Quote_Date', 'PropertyField28', 'PropertyField5', 'PropertyField4', 'PropertyField7', 'PropertyField3', 'PersonalField18', 'PersonalField19', 'Field12', 'SalesField7', 'PersonalField16', 'PersonalField17', 'Field10', 'CoverageField8', 'CoverageField9', 'PropertyField32', 'GeographicField63', 'GeographicField64', 'PropertyField38', 'PropertyField37', 'PropertyField36', 'PropertyField34', 'PropertyField33', 'PropertyField14', 'PropertyField31', 'PropertyField30']
+
+# attrs with NaN: 9 (7/9 are categorical attrs)
+
+After One Hot Encoder, # attrs: 612
+
