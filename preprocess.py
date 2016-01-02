@@ -2,7 +2,10 @@ import numpy as np
 import pandas as pd
 from sklearn import preprocessing
 from sklearn.decomposition import PCA
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.svm import LinearSVC
+from sklearn.feature_selection import SelectFromModel
+
+
 
 def load_data(train_file, test_file):
     df_train = pd.read_csv(train_file, header = 0, delimiter = ',')
@@ -108,6 +111,13 @@ def famd(train, test):
     """
     return train, test
 
+def l1_based_select(train, y, test):
+    lsvc = LinearSVC(C=0.01, penalty="l1", dual=False).fit(train, y)
+    model = SelectFromModel(lsvc, prefit=True)
+    new_train = model.transform(train)
+    new_test = model.transform(test)
+    return new_train, new_test
+
 def clean(data):
     # Lets do some cleaning
 
@@ -115,14 +125,30 @@ def clean(data):
     data['Date'] = pd.to_datetime(pd.Series(data['Original_Quote_Date']))
     data = data.drop('Original_Quote_Date', axis=1)
 
-    data['Year'] = data['Date'].apply(lambda x: int(str(x)[:4]))
-    data['Month'] = data['Date'].apply(lambda x: int(str(x)[5:7]))
-    data['weekday'] = data['Date'].dt.dayofweek
+    # # Strategy 1)
+    # # Year, Month and weekday
+    data['Year'] = data['Date'].apply(lambda x: int(str(x)[:4])) # year
+    data['Month'] = data['Date'].apply(lambda x: int(str(x)[5:7])) # month
+    # data['MDay'] = data['Date'].apply(lambda x: int(str(x)[8:10])) # day in month
+    data['weekday'] = data['Date'].dt.dayofweek # weekday
+
+    # # Strategy 2)
+    # # Day
+    # data['Day'] = data['Date'] - pd.to_datetime('2000-01-01')
+    # data['Day'] = data['Day'].astype(pd.Timedelta).apply(lambda x: x.days)
+
+    # # Strategy 3)
+    # # # Year, Day in Year
+    # # import pdb;pdb.set_trace()
+    # # data['Year'] = data['Date'].apply(lambda x: int(str(x)[:4]))
+    # data['YDay'] = data['Date'].apply(lambda x: (x - pd.to_datetime('%s-01-01'%str(x)[:4])).days ) # day in year
 
     data = data.drop('Date', axis=1)
 
-    # convert Field10 manully
+    # convert Field10 manually
     data['Field10'] = data['Field10'].apply(lambda x: int(x.replace(',','')))
+
+    data = data.fillna(-1)
 
     # # numerical features
     # ndf = data._get_numeric_data()
@@ -152,9 +178,6 @@ def clean(data):
     #                 most_freq = freq
     #                 most_freq_elem = each
     #         data[col] = data[col].fillna(each)
-    # import pdb;pdb.set_trace()
-
-    data = data.fillna(-1)
 
     if 'QuoteConversion_Flag' in data.columns:
         y = data.QuoteConversion_Flag.values

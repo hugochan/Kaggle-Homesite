@@ -1,13 +1,16 @@
 import preprocess as preproc
 import classifier as clf
-from sklearn.cross_validation import train_test_split
 from sklearn.cross_validation import StratifiedKFold
 from sklearn.metrics import roc_auc_score
+from sklearn.grid_search import GridSearchCV
+import xgboost as xgb
+
 import numpy as np
 import pandas as pd
 
-# import pca2
 
+# import pca2
+import bi_lda
 
 
 if __name__  == '__main__':
@@ -82,11 +85,19 @@ if __name__  == '__main__':
         print "experiment 4: LabelEncoder + standardized LDA + xgboost"
         data, y = preproc.clean(df_train)
         data = preproc.label_encoder(data)
-        data = preproc.standardize(data) # standardization
+        # data = preproc.standardize(data) # standardization
+
         skf = StratifiedKFold(y, n_folds=k, shuffle=True, random_state=random_state)
         avg_auc = 0.0
         for each_train, each_test in skf:
-            new_train, new_test = preproc.lda(data[each_train, :], y[each_train], data[each_test, :], n_comp=None)
+            # new_train, new_test = preproc.lda(data[each_train, :], y[each_train], data[each_test, :], n_comp=None)
+
+            lda = bi_lda()
+            train_label = np.hstack((data.iloc[each_train].as_matrix(), y[each_train]))
+            w = lda.train(train_label)
+            new_train = lda.project(w, data.iloc[each_train].as_matrix().transpose()).transpose()
+            new_test = lda.project(w, data.iloc[each_test].as_matrix().transpose()).transpose()
+
             pred = clf.boosted_trees(new_train, y[each_train], new_test)
             auc = roc_auc_score(y[each_test], pred)
             avg_auc += auc
@@ -105,6 +116,84 @@ if __name__  == '__main__':
             auc = roc_auc_score(y[each_test], pred)
             avg_auc += auc
         print "avg auc: %s"%(avg_auc/k)
+
+    elif experiment == 6:
+        # experiment 6: Exhaustive search over specified parameter values for xgboost
+        print "experiment 6: Exhaustive search over specified parameter values for xgboost"
+        data, y = preproc.clean(df_train)
+        data = preproc.one_hot_encoder(data)
+        skf = StratifiedKFold(y, n_folds=k, shuffle=True, random_state=random_state)
+
+        xgb_model = xgb.XGBClassifier()
+        clf = GridSearchCV(estimator=xgb_model,
+                       param_grid={'max_depth': [10], # range(8, 16, 2),
+                        'n_estimators': [50, 100, 200, 500],
+                        'learning_rate': [0.02],
+                        # 'gamma': [0, 0.1],
+                        'min_child_weight': [1], # range(1, 6, 2),
+                        'subsample': [0.8],
+                        'colsample_bytree': [0.8],
+
+                        },
+                        scoring='roc_auc',
+                        cv=skf,
+                        error_score=1,
+                        verbose=1)
+        clf.fit(data, y)
+
+        avg_auc = 0.0
+        for each_train, each_test in skf:
+            pred = clf.predict_proba(data.iloc[each_test])[:,1]
+            auc = roc_auc_score(y[each_test], pred)
+            avg_auc += auc
+        print "avg auc: %s"%(avg_auc/k)
+        import pdb;pdb.set_trace()
+
+    elif experiment == 7:
+        # experiment 7: OneHotEncoder + Logistic regression
+        print "experiment 7: OneHotEncoder + Logistic regression"
+        data, y = preproc.clean(df_train)
+        data = preproc.one_hot_encoder(data)
+        skf = StratifiedKFold(y, n_folds=k, shuffle=True, random_state=random_state)
+
+        avg_auc = 0.0
+        for each_train, each_test in skf:
+            pred = clf.logistic_regression(data.iloc[each_train], y[each_train], data.iloc[each_test])
+            auc = roc_auc_score(y[each_test], pred)
+            avg_auc += auc
+        print "avg auc: %s"%(avg_auc/k)
+        # 0.8181932195
+
+    elif experiment == 8:
+        # experiment 8: OneHotEncoder + Naive bayes
+        print "experiment 8: OneHotEncoder + Naive bayes"
+        data, y = preproc.clean(df_train)
+        data = preproc.one_hot_encoder(data)
+        skf = StratifiedKFold(y, n_folds=k, shuffle=True, random_state=random_state)
+
+        avg_auc = 0.0
+        for each_train, each_test in skf:
+            pred = clf.naive_bayes(data.iloc[each_train], y[each_train], data.iloc[each_test])
+            auc = roc_auc_score(y[each_test], pred)
+            avg_auc += auc
+        print "avg auc: %s"%(avg_auc/k)
+        # 0.753509641813
+
+    elif experiment == 9:
+        # experiment 9: OneHotEncoder + l1_based_select + xgboost
+        print "experiment 9: OneHotEncoder + l1_based_select + xgboost"
+        data, y = preproc.clean(df_train)
+        data = preproc.one_hot_encoder(data)
+        skf = StratifiedKFold(y, n_folds=k, shuffle=True, random_state=random_state)
+
+        avg_auc = 0.0
+        for each_train, each_test in skf:
+            new_train, new_test = preproc.l1_based_select(data.iloc[each_train], y[each_train], data.iloc[each_test])
+            pred = clf.boosted_trees(new_train, y[each_train], new_test)
+            auc = roc_auc_score(y[each_test], pred)
+            avg_auc += auc
+        print "avg auc: %s"%(avg_auc/k)
+        # 0.957124130844
 
     else:
         raise ValueError('ERROR: Unexpected experiment: %s'%experiment)

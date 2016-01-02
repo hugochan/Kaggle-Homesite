@@ -1,0 +1,88 @@
+## How to handle mixed data (numerical & categorical):
+1) LabelEncoder, OneHotEncoder...
+2) etc.
+
+## Feature extraction
+1) PCA +  Individual relevance ranking
+2) LDA
+3) FAMD
+4) IRR
+5) standardization
+6) etc.
+
+## Model selection
+1) xgboost
+2) RF
+3) logistic regression
+4) naive bayes
+5) neural network
+6) etc.
+
+## Experiment results
+1) Feature engineering
+
+xgboost settings:
+                            n_estimators=25,
+                            nthread=-1,
+                            max_depth=10,
+                            learning_rate=0.02,
+                            silent=True,
+                            subsample=0.8,
+                            colsample_bytree=0.6
+
+| No. | Fillnan -1 | Fillnan mean | LableEncoder | OneHotEncoder | Standardized | PCA | LDA | l1_based_select | xgboost |      cv-3 auc        | runtime (s)
+   1       T                            T                                                                          T           0.95887889176       354
+   2       T                            T                                          T                               T           0.935672327087      647
+   3       T                            T                               T                                          T           0.958878835725      330
+   4       T                            T                               T          T                               T           0.924474693345      639
+   5                     T              T                                                                          T           0.9588768449837     528
+   6       T                                            T                                                          T           0.958892573508      780 *
+   7       T                                            T               T                T                         T           0.957453567302      778   
+   8       T                                            T                                            T             T           0.957124130844      1831
+
+6 - 1, Date process: Day, 0.957334358422
+6 - 2, Date process: Year + Day, 0.957379036551
+6 - 3, Date process: Year + YDay, 0.95740636219 (YDay: day in year)
+6 - 4，Date process: Year + Month + weekday + Day + YDay, 0.957416102677
+6 - 5, Date process: Year + Month + MDay + weekday, 0.95737584241 (MDay: day in month)
+Date process here does not change much.
+
+
+## Note: 
+1) Fillnan median/most frequent does not change much. Fillnan -1 is simple and good.
+2) Tuning model params makes large difference.   
+
+
+2) Model selection
+
+(a) xgboost
+
+| No. | n_estimators | max_depth | min_child_weight | learning_rate | subsample | colsample_bytree | scale_pos_weight |   cv-3 auc          | runtime (s)
+   1         25           10             1                0.025          0.8           1                    0.2           0.953122491788        
+   2         25           10             1                0.025          0.8           1                    0.5           0.956502826059        
+   3         25           10             1                0.025          0.8           1                    0.8           0.957082065222        
+   4         25           10             1                0.025          0.8           1                    1             0.958892573508        780   - 
+   5         80           10             1                0.025          0.8           1                    1             0.960112662974        
+   6         200          10             1                0.025          0.8           1                    1             0.963575538026        39971 *
+   7         25           14             1                0.025          0.8           1                    1             0.960261598989        1485
+   8         25           10             1                0.03           0.8           1                    1             0.960519979029        1431
+   9         25           10             1                0.04           0.8           1                    1             0.958303510628        918
+   10        25           10             1                0.035          0.8           1                    1             0.958086848026        909
+   11        25           16             1                0.03           0.8           1                    1             0.960587075228        1316
+   12        25           16             1                0.03           0.8           0.8                  1             0.959121192637        819
+   13        25           18             1                0.03           0.8           1                    1             0.960382557821        1516
+   14        25           16             2                0.03           0.8           1                    1             0.960706412226        4072
+   14        25           16             3                0.03           0.8           1                    1             0.960698434604        4055
+
+
+(b) logistic regression
+
+| No. | penalty |   tol   | C | solver | max_iter |  cv-3 auc      | runtime (s)
+   1       l2     0.0001    1     sag     10000      0.8181932195      22926
+
+(c) naive bayes
+
+| No. |  cv-3 auc        | runtime (s)
+   1     0.753509641813      98
+
+(d) neural network 
