@@ -27,7 +27,7 @@ if __name__  == '__main__':
     train_file = "../datasets/train.csv"
     df_train = pd.read_csv(train_file, header = 0, delimiter = ',')
 
-    experiment = 5
+    experiment = 10
     if experiment == 1:
         # experiment 1: LabelEncoder + xgboost
         print "experiment 1: LabelEncoder + xgboost"
@@ -115,6 +115,7 @@ if __name__  == '__main__':
             pred = clf.boosted_trees(data.iloc[each_train], y[each_train], data.iloc[each_test])
             auc = roc_auc_score(y[each_test], pred)
             avg_auc += auc
+            print "%s"%auc
         print "avg auc: %s"%(avg_auc/k)
 
     elif experiment == 6:
@@ -194,6 +195,22 @@ if __name__  == '__main__':
             avg_auc += auc
         print "avg auc: %s"%(avg_auc/k)
         # 0.957124130844
+
+    elif experiment == 10:
+        # experiment 10: OneHotEncoder + neural network
+        print "experiment 10: OneHotEncoder + neural network"
+        data, y = preproc.clean(df_train)
+        data = preproc.one_hot_encoder(data)
+        skf = StratifiedKFold(y, n_folds=k, shuffle=True, random_state=random_state)
+
+        avg_auc = 0.0
+        for each_train, each_test in skf:
+            pred = clf.nn(data.iloc[each_train], y[each_train], data.iloc[each_test], y[each_test])
+            auc = roc_auc_score(y[each_test], pred)
+            avg_auc += auc
+            print "%s"%auc
+        print "avg auc: %s"%(avg_auc/k)
+        #
 
     else:
         raise ValueError('ERROR: Unexpected experiment: %s'%experiment)
