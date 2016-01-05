@@ -3,3 +3,11 @@ To do list:
 1) Feature extraction: PCA, PCA + individual relevance ranking, LDA, FAMD, etc.
 2) Model selection: GB, RF, etc.
 
+
+2016-01-05
+1) neural network (bagging)
+2) ensemble (voting, bagging, AdaBoost)
+3) feature creation
+4) t-Distributed Stochastic Neighbor Embedding (t-SNE)
+5) SVM
+6) Adaboost with extra trees

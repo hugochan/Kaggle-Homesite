@@ -15,6 +15,9 @@ from nolearn.lasagne import TrainSplit
 # from lasagne.objectives import binary_crossentropy, binary_accuracy
 import theano
 from sklearn.metrics import roc_auc_score
+from sklearn.ensemble import VotingClassifier
+from sklearn.ensemble import BaggingClassifier
+from sklearn.ensemble import AdaBoostClassifier
 
 seed = 260681
 
@@ -28,7 +31,7 @@ def boosted_trees(train, y, test, y2=None):
     reg_alpha=0, reg_lambda=1, scale_pos_weight=1,
     base_score=0.5, seed=0, missing=None
     """
-    clf = xgb.XGBClassifier(n_estimators=400,
+    clf = xgb.XGBClassifier(n_estimators=500,
                             nthread=-1,
                             max_depth=16, # 16
                             learning_rate=0.03, # 0.03
@@ -153,4 +156,104 @@ def nn2(train, y, test):
 
     nn_model = clf.fit(train, y)
     preds = clf.predict_proba(test)[:, 1]
+    return preds
+
+
+def voting_classifier(train, y, test):
+    clf1 = xgb.XGBClassifier(n_estimators=25,
+                            nthread=-1,
+                            max_depth=16, # 16
+                            learning_rate=0.03, # 0.03
+                            min_child_weight=2, # 2
+                            silent=True,
+                            # gamma=0, # 0
+                            # colsample_bylevel=1, # 1
+                            # scale_pos_weight=1, # 1
+                            subsample=0.8, # 0.8
+                            colsample_bytree=0.81) # 0.81
+
+    clf2 = xgb.XGBClassifier(n_estimators=25,
+                            nthread=-1,
+                            max_depth=16, # 16
+                            learning_rate=0.03, # 0.03
+                            min_child_weight=2, # 2
+                            silent=True,
+                            # gamma=0, # 0
+                            # colsample_bylevel=1, # 1
+                            # scale_pos_weight=1, # 1
+                            subsample=0.83, # 0.83
+                            colsample_bytree=0.83) # 0.83
+
+    clf3 = xgb.XGBClassifier(n_estimators=25,
+                            nthread=-1,
+                            max_depth=16, # 16
+                            learning_rate=0.03, # 0.03
+                            min_child_weight=2, # 2
+                            silent=True,
+                            # gamma=0, # 0
+                            # colsample_bylevel=1, # 1
+                            # scale_pos_weight=1, # 1
+                            subsample=0.83, # 0.83
+                            colsample_bytree=0.81) # 0.81
+
+    eclf = VotingClassifier(estimators=[('xgboost1', clf1),
+                            ('xgboost2', clf2),
+                            ('xgboost3', clf3)],
+                            voting='soft',
+                            weights=[1, 1, 1])
+
+    eclf.fit(train, y)
+    preds = eclf.predict_proba(test)[:, 1]
+
+    return preds
+
+def ada_boost(train, y, test, estimator):
+    if estimator == 'GaussianNB':
+        base_est = GaussianNB()
+    elif estimator == 'logistic_regression':
+        base_est = LogisticRegression(penalty='l2',
+                            dual=False,
+                            tol=0.0001,
+                            C=1.0,
+                            fit_intercept=True,
+                            intercept_scaling=1,
+                            class_weight=None,
+                            random_state=None,
+                            solver='sag', # 'sag' fast convergence is only guaranteed on features with approximately the same scale.
+                            max_iter=1000,
+                            multi_class='ovr',
+                            verbose=1,
+                            # warm_start=False,
+                    )
+    else:
+        raise ValueError('ERROR: Unexpected argument estimator: %s'%estimator)
+
+    bdt = AdaBoostClassifier(base_estimator=base_est,
+                            n_estimators=50,
+                            # algorithm="SAMME.R",
+                            learning_rate=0.5,
+                            # random_state=None,
+                            )
+    bdt.fit(train, y)
+    preds = bdt.predict_proba(test)[:, 1]
+    return preds
+
+def bagging(train, y, test, estimator):
+    if estimator == 'NN':
+        base_est = None
+    else:
+        raise ValueError('ERROR: Unexpected argument estimator: %s'%estimator)
+
+    bc = BaggingClassifier(base_estimator=base_est,
+                    n_estimators=10,
+                    max_samples=0.9,
+                    max_features=0.9,
+                    bootstrap=True,
+                    bootstrap_features=True,
+                    oob_score=True,
+                    # warm_start=False,
+                    # random_state=None,
+                    verbose=1)
+    bc.fit(train, y)
+    preds = bc.predict_proba(test)[:, 1]
     return preds
