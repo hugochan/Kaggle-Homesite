@@ -8,8 +8,8 @@ from sklearn.feature_selection import SelectFromModel
 
 
 def load_data(train_file, test_file):
-    df_train = pd.read_csv(train_file, header = 0, delimiter = ',')
-    df_test = pd.read_csv(test_file, header = 0, delimiter = ',')
+    df_train = pd.read_csv(train_file, header=0, delimiter=',')
+    df_test = pd.read_csv(test_file, header=0, delimiter=',')
 
     # put the original column names in a python list
     # original_headers = list(df_train.columns.values)
@@ -61,7 +61,7 @@ def one_hot_encoder(data):
             one_hot_label = enc.fit_transform(int_label.reshape(-1, 1)).toarray()
             data = data.drop(f, axis=1)
             for i in range(one_hot_label.shape[1]):
-                data['%s_%s'%(f,i)] = one_hot_label[:, i]
+                data['%s_%s'%(f, i)] = one_hot_label[:, i]
     return data
 
 
@@ -147,6 +147,10 @@ def clean(data):
 
     # convert Field10 manually
     data['Field10'] = data['Field10'].apply(lambda x: int(x.replace(',','')))
+
+    # new features: count number of attrs with nan or -1 values
+    # data['n_null'] = np.sum(data.isnull(), axis=1)
+    # data['n_-1'] = np.sum(data==-1, axis=1)
 
     data = data.fillna(-1)
 

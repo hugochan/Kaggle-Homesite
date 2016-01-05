@@ -16,3 +16,9 @@ categorical attrs: (Field10 can be directly converted to numerical attr)
 
 After One Hot Encoder, # attrs: 612
 
+
+# Feature generation:
+- if an applicant has left many fields blank (or uncodable), then he or she is probably less serious about taking / accepting the quote.
+
+correlation (np.sum(df==-1, axis=1), y) = -0.14613877
+correlation (np.sum(df.isnull(), axis=1), y) = 0.14670898
