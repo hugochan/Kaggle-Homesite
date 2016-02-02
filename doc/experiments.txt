@@ -97,6 +97,9 @@ Date process here does not change much.
    34        400          16             2                0.03           0.8           0.81                 1             0.965476805491        22655 *  
    35        80           16             2                0.03           0.83          0.81                 1             0.963302645587        5565  
    36        80           16             2                0.03           0.83          0.83                 1             0.963230755938        5314  
+ m-37        25           16             1                0.03           0.8           0.8                  1             0.961632878357        1198
+ m-38        25           16             2                0.03           0.8           0.81                 1             0.961833301408        1154
+
 
 # note: with min_child_weight set, gamma param seems not to be "useful".
 
@@ -137,6 +140,8 @@ selected params set:
 
 (d) neural network 
 
+# note: label_encoder works much better here.
+
 ## Layer information
 
   #  name        size
@@ -169,3 +174,15 @@ runtime ()_
 3) OneHotEncoder + xgboost (n=400)
    LB score: 0.96644
    runtime (s): 9701
+4) OneHotEncoder + xgboost (n=800)
+   LB score: 0.96645
+   runtime (s): N/A
+5) OneHotEncoder + Centered + xgboost (n=500)
+   LB score: 0.96659
+   runtime (s): < 12432
+
+6) Xgboost_stop_R (eta = 0.023, max_depth = 6, subsample = 0.83, colsample_bytree = 0.77, nrounds = 3000)
+   LB score: 0.96809
+
+7) Xgboost_stop_R (eta = 0.023, max_depth = 6, subsample = 0.83, colsample_bytree = 0.77, nrounds = 3000) + addNullCol
+   LB score: 0.96814

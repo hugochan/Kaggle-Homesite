@@ -1,4 +1,5 @@
 To do list:
+eorrelation (np.sum(df==-1, axis=1), y) = -0.14613877
 
 1) Feature extraction: PCA, PCA + individual relevance ranking, LDA, FAMD, etc.
 2) Model selection: GB, RF, etc.

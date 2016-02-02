@@ -27,6 +27,9 @@ if __name__  == '__main__':
 
         data = pd.concat([train, test])
         data = preproc.one_hot_encoder(data)
+
+        data = preproc.standardize(data)
+
         train = data.iloc[: train.shape[0]]
         test = data.iloc[train.shape[0]:]
         pred = clf.boosted_trees(train, y, test)

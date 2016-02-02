@@ -38,8 +38,9 @@ def standardize(data):
     """
     centered_data = data - data.mean()
     # MaxAbs scaling
-    std_data = preprocessing.maxabs_scale(centered_data)
-    return std_data
+    # std_data = preprocessing.maxabs_scale(centered_data)
+    return centered_data
+    # return std_data
 
 def standardize_local(data):
     # standardize for specific features
@@ -149,8 +150,8 @@ def clean(data):
     data['Field10'] = data['Field10'].apply(lambda x: int(x.replace(',','')))
 
     # new features: count number of attrs with nan or -1 values
-    # data['n_null'] = np.sum(data.isnull(), axis=1)
-    # data['n_-1'] = np.sum(data==-1, axis=1)
+    # data['n_null'] = np.sum(data.isnull(), axis=1) + np.sum(data==-1, axis=1)
+    # data['nan'] = np.sum(data==-1, axis=1)
 
     data = data.fillna(-1)
 

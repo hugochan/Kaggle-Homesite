@@ -27,7 +27,7 @@ if __name__  == '__main__':
     train_file = "../datasets/train.csv"
     df_train = pd.read_csv(train_file, header=0, delimiter=',')
 
-    experiment = 11
+    experiment = 10
     if experiment == 1:
         # experiment 1: LabelEncoder + xgboost
         print "experiment 1: LabelEncoder + xgboost"
@@ -109,6 +109,7 @@ if __name__  == '__main__':
         data, y = preproc.clean(df_train)
         # import pdb;pdb.set_trace()
         data = preproc.one_hot_encoder(data)
+        # data = preproc.standardize(data)
         skf = StratifiedKFold(y, n_folds=k, shuffle=True, random_state=random_state)
         avg_auc = 0.0
         for each_train, each_test in skf:
@@ -197,19 +198,43 @@ if __name__  == '__main__':
         # 0.957124130844
 
     elif experiment == 10:
-        # experiment 10: OneHotEncoder + neural network
-        print "experiment 10: OneHotEncoder + neural network"
-        data, y = preproc.clean(df_train)
-        data = preproc.one_hot_encoder(data)
-        skf = StratifiedKFold(y, n_folds=k, shuffle=True, random_state=random_state)
+        # experiment 10: LabelEncoder + neural network
+        print "experiment 10: LabelEncoder + neural network"
+        # import pdb;pdb.set_trace()
+        # data, y = preproc.clean(df_train)
+        # data = preproc.label_encoder(data)
 
-        avg_auc = 0.0
-        for each_train, each_test in skf:
-            pred = clf.nn(data.iloc[each_train], y[each_train], data.iloc[each_test], y[each_test])
-            auc = roc_auc_score(y[each_test], pred)
-            avg_auc += auc
-            print "%s"%auc
-        print "avg auc: %s"%(avg_auc/k)
+        # generate and write to disks
+        # df_training = data.sample(frac=0.8) # train
+        # y_training = y[df_training.index]
+        # df_testing = data.drop(df_training.index, axis=0) # test
+        # y_testing = np.delete(y, df_training.index, 0)
+
+        # df_training.to_csv('df_training_noonehot.csv', index=False)
+        # np.savetxt("y_training_noonehot.csv", y_training, delimiter=",")
+        # df_testing.to_csv('df_testing_noonehot.csv', index=False)
+        # np.savetxt("y_testing_noonehot.csv", y_testing, delimiter=",")
+
+        # read from disks
+        df_training = pd.read_csv('df_training_noonehot.csv', header=0, delimiter=',')
+        y_training = np.genfromtxt('y_training_noonehot.csv', delimiter=',')
+        df_testing = pd.read_csv('df_testing_noonehot.csv', header=0, delimiter=',')
+        y_testing = np.genfromtxt('y_testing_noonehot.csv', delimiter=',')
+
+
+        pred = clf.nn(df_training, y_training, df_testing, y_testing)
+        # auc = roc_auc_score(y_testing, pred)
+        # print "auc: %s"%auc
+
+        # skf = StratifiedKFold(y, n_folds=k, shuffle=True, random_state=random_state)
+
+        # avg_auc = 0.0
+        # for each_train, each_test in skf:
+            # pred = clf.nn(data.iloc[each_train], y[each_train], data.iloc[each_test])
+            # auc = roc_auc_score(y[each_test], pred)
+            # avg_auc += auc
+            # print "%s"%auc
+        # print "avg auc: %s"%(avg_auc/k)
 
     elif experiment == 11:
         # experiment 11: voting classifier
@@ -225,6 +250,48 @@ if __name__  == '__main__':
             avg_auc += auc
             print "%s"%auc
         print "avg auc: %s"%(avg_auc/k)
+
+    elif experiment == 12:
+        # experiment 12: AdaBoost
+        print "experiment 12: AdaBoost"
+        data, y = preproc.clean(df_train)
+        data = preproc.one_hot_encoder(data)
+        skf = StratifiedKFold(y, n_folds=k, shuffle=True, random_state=random_state)
+
+        avg_auc = 0.0
+        for each_train, each_test in skf:
+            pred = clf.ada_boost(data.iloc[each_train], y[each_train], data.iloc[each_test], "GaussianNB")
+            auc = roc_auc_score(y[each_test], pred)
+            avg_auc += auc
+            print "%s"%auc
+        print "avg auc: %s"%(avg_auc/k)
+
+    elif experiment == 13:
+        # experiment 13: Bagging
+        print "experiment 13: Bagging"
+
+        df_training = pd.read_csv('df_training_noonehot.csv', header=0, delimiter=',')
+        y_training = np.genfromtxt('y_training_noonehot.csv', delimiter=',')
+        df_testing = pd.read_csv('df_testing_noonehot.csv', header=0, delimiter=',')
+        y_testing = np.genfromtxt('y_testing_noonehot.csv', delimiter=',')
+
+        pred = clf.bagging(df_training, y_training, df_testing, "NN")
+        auc = roc_auc_score(y_testing, pred)
+        print "auc: %s"%auc
+
+
+
+        # data, y = preproc.clean(df_train)
+        # data = preproc.one_hot_encoder(data)
+        # skf = StratifiedKFold(y, n_folds=k, shuffle=True, random_state=random_state)
+
+        # avg_auc = 0.0
+        # for each_train, each_test in skf:
+        #     pred = clf.bagging(data.iloc[each_train], y[each_train], data.iloc[each_test], "NN")
+        #     auc = roc_auc_score(y[each_test], pred)
+        #     avg_auc += auc
+        #     print "%s"%auc
+        # print "avg auc: %s"%(avg_auc/k)
 
     else:
         raise ValueError('ERROR: Unexpected experiment: %s'%experiment)
