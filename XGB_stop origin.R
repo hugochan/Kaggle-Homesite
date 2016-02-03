@@ -88,7 +88,7 @@ param <- list(  objective           = "binary:logistic",
 
 clf <- xgb.train(   params              = param, 
                     data                = dtrain, 
-                    nrounds             = 4000, 
+                    nrounds             = 3000, 
                     verbose             = 0,  #1
                     #early.stop.round    = 150,
                     #watchlist           = watchlist,
